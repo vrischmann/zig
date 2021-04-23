@@ -830,7 +830,7 @@ test "setName, getName" {
     var context = Context{};
     try context.init();
 
-    var thread = try spawn(Context.run, &context);
+    var thread = try spawn(Context.run, &context, .{});
     context.thread = thread;
     context.start_wait_event.set();
     context.test_done_event.wait();

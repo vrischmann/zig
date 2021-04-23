@@ -321,7 +321,7 @@ test "std.Thread.getCurrentId" {
     if (builtin.single_threaded) return error.SkipZigTest;
 
     var thread_current_id: Thread.Id = undefined;
-    const thread = try Thread.spawn(testThreadIdFn, &thread_current_id);
+    const thread = try Thread.spawn(testThreadIdFn, &thread_current_id, .{});
     const thread_id = thread.handle();
     thread.wait();
     if (Thread.use_pthreads) {
@@ -340,10 +340,10 @@ test "spawn threads" {
 
     var shared_ctx: i32 = 1;
 
-    const thread1 = try Thread.spawn(start1, {});
-    const thread2 = try Thread.spawn(start2, &shared_ctx);
-    const thread3 = try Thread.spawn(start2, &shared_ctx);
-    const thread4 = try Thread.spawn(start2, &shared_ctx);
+    const thread1 = try Thread.spawn(start1, {}, .{});
+    const thread2 = try Thread.spawn(start2, &shared_ctx, .{});
+    const thread3 = try Thread.spawn(start2, &shared_ctx, .{});
+    const thread4 = try Thread.spawn(start2, &shared_ctx, .{});
 
     thread1.wait();
     thread2.wait();
@@ -371,8 +371,8 @@ test "cpu count" {
 
 test "thread local storage" {
     if (builtin.single_threaded) return error.SkipZigTest;
-    const thread1 = try Thread.spawn(testTls, {});
-    const thread2 = try Thread.spawn(testTls, {});
+    const thread1 = try Thread.spawn(testTls, {}, .{});
+    const thread2 = try Thread.spawn(testTls, {}, .{});
     testTls({});
     thread1.wait();
     thread2.wait();

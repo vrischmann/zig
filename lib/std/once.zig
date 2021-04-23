@@ -63,7 +63,7 @@ test "Once executes its function just once" {
                 fn thread_fn(x: u8) void {
                     global_once.call();
                 }
-            }.thread_fn, 0);
+            }.thread_fn, 0, .{});
         }
     }
 

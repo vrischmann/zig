@@ -216,11 +216,11 @@ test "std.atomic.Queue" {
 
         var putters: [put_thread_count]*std.Thread = undefined;
         for (putters) |*t| {
-            t.* = try std.Thread.spawn(startPuts, &context);
+            t.* = try std.Thread.spawn(startPuts, &context, .{});
         }
         var getters: [put_thread_count]*std.Thread = undefined;
         for (getters) |*t| {
-            t.* = try std.Thread.spawn(startGets, &context);
+            t.* = try std.Thread.spawn(startGets, &context, .{});
         }
 
         for (putters) |t|
