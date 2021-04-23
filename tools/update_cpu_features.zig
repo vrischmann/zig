@@ -798,7 +798,7 @@ pub fn main() anyerror!void {
                 .zig_src_dir = zig_src_dir,
                 .root_progress = root_progress,
                 .llvm_target = llvm_target,
-            });
+            }, .{});
         }
         for (threads) |thread| {
             thread.wait();
