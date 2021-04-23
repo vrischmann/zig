@@ -435,6 +435,13 @@ pub fn spawn(comptime startFn: anytype, context: SpawnContextType(@TypeOf(startF
                 else => |err| return windows.unexpectedError(err),
             }
         };
+
+        if (options.thread_name) |thread_name| {
+            outer_context.thread.setName(thread_name) catch |err| switch (err) {
+                else => return error.Unexpected,
+            };
+        }
+
         return &outer_context.thread;
     }
 
@@ -540,7 +547,14 @@ pub fn spawn(comptime startFn: anytype, context: SpawnContextType(@TypeOf(startF
             thread_obj.data.memory.ptr,
         );
         return switch (err) {
-            0 => thread_obj,
+            0 => blk: {
+                if (options.thread_name) |thread_name| {
+                    thread_obj.setName(thread_name) catch |set_name_err| switch (set_name_err) {
+                        else => return error.Unexpected,
+                    };
+                }
+                break :blk thread_obj;
+            },
             os.EAGAIN => error.SystemResources,
             os.EPERM => unreachable,
             os.EINVAL => unreachable,
@@ -660,7 +674,15 @@ pub fn spawn(comptime startFn: anytype, context: SpawnContextType(@TypeOf(startF
             &thread_ptr.data.handle,
         );
         switch (os.errno(rc)) {
-            0 => return thread_ptr,
+            0 => {
+                if (options.thread_name) |thread_name| {
+                    thread_ptr.setName(thread_name) catch |set_name_err| switch (set_name_err) {
+                        else => return error.Unexpected,
+                    };
+                }
+
+                return thread_ptr;
+            },
             os.EAGAIN => return error.ThreadQuotaExceeded,
             os.EINVAL => unreachable,
             os.ENOMEM => return error.SystemResources,
