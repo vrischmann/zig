@@ -780,6 +780,9 @@ test "setName, getName" {
         thread: *Thread = undefined,
 
         pub fn run(ctx: *@This()) !void {
+            // Wait for the main thread to have set the thread field in the context.
+            std.time.sleep(5 * std.time.ns_per_ms);
+
             switch (std.Target.current.os.tag) {
                 .windows => testThreadName(ctx.thread) catch |err| switch (err) {
                     error.Unsupported => return error.SkipZigTest,
