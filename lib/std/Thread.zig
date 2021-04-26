@@ -86,7 +86,7 @@ const maxNameLen = switch (std.Target.current.os.tag) {
     else => 0,
 };
 
-pub fn setName(self: Thread, name: []const u8) !void {
+fn setName(self: Thread, name: []const u8) !void {
     if (name.len > maxNameLen) return error.NameTooLong;
 
     const name_with_terminator = blk: {
