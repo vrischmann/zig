@@ -4,7 +4,7 @@ ld.lld -error-limit=0 -O0 -z stack-size=16777216 --gc-sections --eh-frame-hdr -m
   -o /home/vincent/dev/devtools/zig/zig-cache/o/dea229afc8df752cfa683374f7c1fb47/zig \
   /usr/lib/gcc/x86_64-redhat-linux/11/../../../../lib64/crt1.o \
   /usr/lib/gcc/x86_64-redhat-linux/11/../../../../lib64/crti.o \
-  -rpath /lib64 -rpath /usr/lib64 \
+  -rpath /lib64 -rpath /usr/lib64  \
   -L /home/vincent/dev/devtools/zig-bootstrap/out/host/lib \
   -L /usr/local/lib64 \
   -L /usr/local/lib \
@@ -15,6 +15,7 @@ ld.lld -error-limit=0 -O0 -z stack-size=16777216 --gc-sections --eh-frame-hdr -m
   -L /usr/lib \
   -L /lib/x86_64-linux-gnu \
   -L /usr/lib/gcc/x86_64-redhat-linux/11/../../../../lib64 \
+  -L /usr/lib/gcc/x86_64-redhat-linux/11 \
   -dynamic-linker /lib64/ld-linux-x86-64.so.2 \
   /home/vincent/dev/devtools/zig/build/zigcpp/libzigcpp.a \
   /home/vincent/dev/devtools/zig-bootstrap/out/host/lib/libclangFrontendTool.a \
@@ -84,8 +85,9 @@ ld.lld -error-limit=0 -O0 -z stack-size=16777216 --gc-sections --eh-frame-hdr -m
   -lLLVMAnalysis -lLLVMProfileData -lLLVMObject -lLLVMTextAPI -lLLVMMCParser -lLLVMMC -lLLVMDebugInfoCodeView -lLLVMBitReader -lLLVMCore \
   -lLLVMRemarks -lLLVMBitstreamReader -lLLVMBinaryFormat -lLLVMTableGen -lLLVMSupport -lLLVMDemangle \
   -lz -ltinfo \
-  /home/vincent/.cache/zig/o/df1b107c2b5230f0e228b701ea21087a/libc++abi.a \
-  /home/vincent/.cache/zig/o/e5dee5b46e448cced01802c77c06d770/libc++.a \
+  # /home/vincent/.cache/zig/o/df1b107c2b5230f0e228b701ea21087a/libc++abi.a \
+  # /home/vincent/.cache/zig/o/e5dee5b46e448cced01802c77c06d770/libc++.a \
   /home/vincent/.cache/zig/o/cda2877d22a54f59539eb778577a5d70/libunwind.a \
   -lm -lpthread -lc -ldl -lrt \
+  -lstdc++ \
   -lutil /usr/lib/gcc/x86_64-redhat-linux/11/../../../../lib64/crtn.o
