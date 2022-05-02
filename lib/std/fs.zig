@@ -2695,11 +2695,11 @@ const CopyFileRawError = error{SystemResources} || os.CopyFileRangeError || os.S
 // Transfer all the data between two file descriptors in the most efficient way.
 // The copy starts at offset 0, the initial offsets are preserved.
 // No metadata is transferred over.
-fn copy_file(fd_in: os.fd_t, fd_out: os.fd_t) CopyFileRawError!void {
+pub fn copy_file(fd_in: os.fd_t, fd_out: os.fd_t) CopyFileRawError!u64 {
     if (comptime builtin.target.isDarwin()) {
         const rc = os.system.fcopyfile(fd_in, fd_out, null, os.system.COPYFILE_DATA);
         switch (os.errno(rc)) {
-            .SUCCESS => return,
+            .SUCCESS => return rc,
             .INVAL => unreachable,
             .NOMEM => return error.SystemResources,
             // The source file is not a directory, symbolic link, or regular file.
@@ -2722,7 +2722,7 @@ fn copy_file(fd_in: os.fd_t, fd_out: os.fd_t) CopyFileRawError!void {
             if (amt == 0) break :cfr_loop;
             offset += amt;
         }
-        return;
+        return offset;
     }
 
     // Sendfile is a zero-copy mechanism iff the OS supports it, otherwise the
@@ -2735,6 +2735,7 @@ fn copy_file(fd_in: os.fd_t, fd_out: os.fd_t) CopyFileRawError!void {
         if (amt == 0) break :sendfile_loop;
         offset += amt;
     }
+    return offset;
 }
 
 test {

@@ -8,6 +8,12 @@ const testing = std.testing;
 /// This function uses a static 4096 byte buffer.
 pub fn copy(dest: anytype, source: anytype) !usize {
     var buffer: [4096]u8 = undefined;
+
+    if (@TypeOf(dest.context) == std.fs.File and @TypeOf(source.context) == std.fs.File) {
+        const copied = try std.fs.copy_file(source.context.handle, dest.context.handle);
+        return @intCast(usize, copied);
+    }
+
     return copyUsingBuffer(dest, source, &buffer);
 }
 
@@ -58,7 +64,7 @@ test "copy empty buffer" {
 
 test "copy file" {
     var dir = testing.tmpDir(.{});
-    defer dir.cleanup();
+    // defer dir.cleanup();
 
     var file1 = try dir.dir.createFile("file1.txt", .{ .read = true });
     defer file1.close();
