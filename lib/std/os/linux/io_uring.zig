@@ -378,11 +378,18 @@ pub const IO_Uring = struct {
         self: *IO_Uring,
         user_data: u64,
         fd: os.fd_t,
-        buffer: []u8,
+        buffer: ReadBuffer,
         offset: u64,
     ) !*io_uring_sqe {
         const sqe = try self.get_sqe();
-        io_uring_prep_read(sqe, fd, buffer, offset);
+        switch (buffer) {
+            .buffer => |slice| io_uring_prep_read(sqe, fd, slice, offset),
+            .buffer_selection => |selection| {
+                io_uring_prep_rw(.READ, sqe, fd, 0, selection.len, offset);
+                sqe.flags |= linux.IOSQE_BUFFER_SELECT;
+                sqe.buf_index = selection.group_id;
+            },
+        }
         sqe.user_data = user_data;
         return sqe;
     }
@@ -1792,7 +1799,7 @@ test "write/read" {
     try testing.expectEqual(linux.IORING_OP.WRITE, sqe_write.opcode);
     try testing.expectEqual(@as(u64, 10), sqe_write.off);
     sqe_write.flags |= linux.IOSQE_IO_LINK;
-    const sqe_read = try ring.read(0x22222222, fd, buffer_read[0..], 10);
+    const sqe_read = try ring.read(0x22222222, fd, .{ .buffer = buffer_read[0..] }, 10);
     try testing.expectEqual(linux.IORING_OP.READ, sqe_read.opcode);
     try testing.expectEqual(@as(u64, 10), sqe_read.off);
     try testing.expectEqual(@as(u32, 2), try ring.submit());
@@ -2534,7 +2541,7 @@ test "register_files_update" {
 
     var buffer = [_]u8{42} ** 128;
     {
-        const sqe = try ring.read(0xcccccccc, fd_index, &buffer, 0);
+        const sqe = try ring.read(0xcccccccc, fd_index, .{ .buffer = &buffer }, 0);
         try testing.expectEqual(linux.IORING_OP.READ, sqe.opcode);
         sqe.flags |= linux.IOSQE_FIXED_FILE;
 
@@ -2555,7 +2562,7 @@ test "register_files_update" {
 
     {
         // Next read should still work since fd_index in the registered file descriptors hasn't been updated yet.
-        const sqe = try ring.read(0xcccccccc, fd_index, &buffer, 0);
+        const sqe = try ring.read(0xcccccccc, fd_index, .{ .buffer = &buffer }, 0);
         try testing.expectEqual(linux.IORING_OP.READ, sqe.opcode);
         sqe.flags |= linux.IOSQE_FIXED_FILE;
 
@@ -2572,7 +2579,7 @@ test "register_files_update" {
 
     {
         // Now this should fail since both fds are sparse (-1)
-        const sqe = try ring.read(0xcccccccc, fd_index, &buffer, 0);
+        const sqe = try ring.read(0xcccccccc, fd_index, .{ .buffer = &buffer }, 0);
         try testing.expectEqual(linux.IORING_OP.READ, sqe.opcode);
         sqe.flags |= linux.IOSQE_FIXED_FILE;
 
