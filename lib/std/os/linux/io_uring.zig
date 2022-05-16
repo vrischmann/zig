@@ -534,11 +534,19 @@ pub const IO_Uring = struct {
         self: *IO_Uring,
         user_data: u64,
         fd: os.fd_t,
-        buffer: []u8,
+        buffer: ReadBuffer,
         flags: u32,
     ) !*io_uring_sqe {
         const sqe = try self.get_sqe();
-        io_uring_prep_recv(sqe, fd, buffer, flags);
+        switch (buffer) {
+            .buffer => |slice| io_uring_prep_recv(sqe, fd, slice, flags),
+            .buffer_selection => |selection| {
+                io_uring_prep_rw(.RECV, sqe, fd, 0, selection.len, 0);
+                sqe.rw_flags = flags;
+                sqe.flags |= linux.IOSQE_BUFFER_SELECT;
+                sqe.buf_index = selection.group_id;
+            },
+        }
         sqe.user_data = user_data;
         return sqe;
     }
@@ -2014,7 +2022,7 @@ test "accept/connect/send/recv" {
 
     const send = try ring.send(0xeeeeeeee, client, buffer_send[0..], 0);
     send.flags |= linux.IOSQE_IO_LINK;
-    _ = try ring.recv(0xffffffff, cqe_accept.res, buffer_recv[0..], 0);
+    _ = try ring.recv(0xffffffff, cqe_accept.res, .{ .buffer = buffer_recv[0..] }, 0);
     try testing.expectEqual(@as(u32, 2), try ring.submit());
 
     const cqe_send = try ring.copy_cqe();
@@ -2282,7 +2290,7 @@ test "accept/connect/recv/link_timeout" {
         .flags = 0,
     }, cqe_connect);
 
-    const sqe_recv = try ring.recv(0xffffffff, cqe_accept.res, buffer_recv[0..], 0);
+    const sqe_recv = try ring.recv(0xffffffff, cqe_accept.res, .{ .buffer = buffer_recv[0..] }, 0);
     sqe_recv.flags |= linux.IOSQE_IO_LINK;
 
     const ts = os.linux.kernel_timespec{ .tv_sec = 0, .tv_nsec = 1000000 };
@@ -2469,7 +2477,7 @@ test "accept/connect/recv/cancel" {
         .flags = 0,
     }, cqe_connect);
 
-    _ = try ring.recv(0xffffffff, cqe_accept.res, buffer_recv[0..], 0);
+    _ = try ring.recv(0xffffffff, cqe_accept.res, .{ .buffer = buffer_recv[0..] }, 0);
     try testing.expectEqual(@as(u32, 1), try ring.submit());
 
     const sqe_cancel = try ring.cancel(0x99999999, 0xffffffff, 0);
