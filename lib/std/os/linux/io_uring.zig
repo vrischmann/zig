@@ -358,6 +358,20 @@ pub const IO_Uring = struct {
         return sqe;
     }
 
+    /// Used to select how the read should be handled.
+    pub const ReadBuffer = union(enum) {
+        /// io_uring will read directly into this buffer
+        buffer: []u8,
+
+        /// io_uring will select a buffer that has previously been provided with `provide_buffers`.
+        /// The buffer group reference by `group_id` must contain at least one buffer for the read to work.
+        /// `len` controls the number of bytes to read into the selected buffer.
+        buffer_selection: struct {
+            group_id: u16,
+            len: usize,
+        },
+    };
+
     /// Queues (but does not submit) an SQE to perform a `read(2)`.
     /// Returns a pointer to the SQE.
     pub fn read(
