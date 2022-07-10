@@ -562,6 +562,7 @@ fn addCmakeCfgOptionsToExe(
                 else => |e| return e,
             };
             exe.linkSystemLibrary("unwind");
+            exe.linkSystemLibrary("c_nonshared");
         } else if (exe.target.isFreeBSD()) {
             try addCxxKnownPath(b, cfg, exe, "libc++.a", null, need_cpp_includes);
             exe.linkSystemLibrary("pthread");
